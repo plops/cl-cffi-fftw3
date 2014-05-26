@@ -14,7 +14,9 @@ prepare-threads [n]
 ```
 
 Initialize fftw3_threads to use n threads. On Linux the optional
-parameter n defaults to the number of processors.
+parameter n defaults to the number of processors. This function
+doesn't have to be called, if only one thread should be used for
+calculations.
 
 
 ```
