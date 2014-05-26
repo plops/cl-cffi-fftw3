@@ -1,14 +1,18 @@
 (in-package :fftw)
 
-(defcfun sysconf :long (name :int))
-(defparameter +_SC_NPROCESSORS_ONLN+ 84)
-(sysconf +_SC_NPROCESSORS_ONLN+)
+
+#+linux
+(progn
+  (defcfun sysconf :long (name :int))
+  (defparameter +_SC_NPROCESSORS_ONLN+ 84)
+  (sysconf +_SC_NPROCESSORS_ONLN+))
 
 (defun get-number-processors ()
-  (let ((v (sysconf +_SC_NPROCESSORS_ONLN+)))
-    (if (= v -1)
-	1
-	v)))
+  #+linux (let ((v (sysconf +_SC_NPROCESSORS_ONLN+)))
+	    (if (= v -1)
+		1
+		v))
+  #-win32 1)
 
 (defun prepare-threads (&optional (n (get-number-processors)))
   "Initialize fftw3_threads to use n threads. On Linux n defaults to the number of processors."
