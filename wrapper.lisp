@@ -11,6 +11,7 @@
 	v)))
 
 (defun prepare-threads (&optional (n (get-number-processors)))
+  "Initialize fftw3_threads to use n threads. On Linux n defaults to the number of processors."
   (%fftw_init_threads)
   (%fftw_plan_with_nthreads n))
 
@@ -31,7 +32,8 @@
 			       +forward+ +estimate+))))))))
 
 (defun ft (in)
-  ; (declare (type (array (complex double-float) *) in))
+  "Plan and execute an out-of-place Fourier transform of the array 'in'. The input array 'in' must be a displaced one-dimensional array."
+  (declare (type (array (complex double-float) *) in))
   (let* ((out1 (make-array (array-total-size in) :element-type '(complex double-float)))
 	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
 			   :displaced-to out1))
