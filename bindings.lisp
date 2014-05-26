@@ -40,9 +40,3 @@
     :void
   (nthreads :int))
 
-
-
-;; (progn
-;;  (init-threads)
-;;  (plan-with-nthreads 4))
-
