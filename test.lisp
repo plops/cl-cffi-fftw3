@@ -4,6 +4,8 @@
 #+nil
 (load "~/quicklisp/setup.lisp")
 #+nil
+(load "c:/users/minyi_000/quicklisp/setup.lisp")
+#+nil
 (ql:quickload 'cffi)
 
 (setf asdf:*central-registry*
@@ -12,8 +14,8 @@
 
     ;; Additional places where ASDF can find
     ;; system definition files
-   #+win32 #p"/home/martin/stage/cl-cffi-fftw3/"
-    #-win32 #p"d:/martin/cl-cffi-fftw3/"))
+    #+linux #p"/home/martin/stage/cl-cffi-fftw3/"
+    #-linux #p"d:/martin/cl-cffi-fftw3/"))
 #+nil
 (asdf:load-system "fftw")
 
@@ -45,3 +47,5 @@
 	(dotimes (i w)
 	  (format t "~1,'0d" (floor (abs (aref *bla* j i)) (/ (* h w) 9))))
 	(terpri)))))
+
+

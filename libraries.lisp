@@ -11,4 +11,4 @@
 
 (defun load-fftw-libraries ()
   (use-foreign-library fftw3)
-  #+win32 (use-foreign-library fftw3_threads))
+  #+linux (use-foreign-library fftw3_threads))
