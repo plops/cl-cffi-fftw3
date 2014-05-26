@@ -1,9 +1,17 @@
+(in-package :fftw)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (load-fftw-libraries))
+
+;; constants
 
 (defconstant +forward+ -1)
 (defconstant +backward+ 1)
 (defconstant +measure+ 0)
 (defconstant +estimate+ (ash 1 6)) ;; array isn't overwritten during planning
+
+;; types
+(defctype plan-pointer :pointer "Pointer to FFTW plan definition")
 
 (load-shared-object "libfftw3.so.3")
 (define-alien-type plan (* int))
