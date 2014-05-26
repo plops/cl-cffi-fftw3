@@ -1,4 +1,6 @@
 (defpackage #:fftw
     (:use #:cl #:cffi)
     (:export
-     #:prepare-threads))
+     #:prepare-threads
+     #:plan
+     #:ft))
