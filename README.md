@@ -9,8 +9,8 @@ with arbitrary array sizes.
 
 prepare-threads [n]
 
-Initialize fftw3_threads to use n threads. On Linux n defaults to the
-number of processors.
+Initialize fftw3_threads to use n threads. On Linux the optional
+parameter n defaults to the number of processors.
 
 
 
