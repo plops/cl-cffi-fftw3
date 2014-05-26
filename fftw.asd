@@ -10,7 +10,4 @@
   :components ((:file "package")
                (:file "libraries" :depends-on ("package"))
                (:file "bindings" :depends-on ("package" "libraries"))
-               (:file "wrapper" :depends-on ("package" "bindings"))
-               (:file "redland-iterate" :depends-on ("package" "wrapper"))
-               (:file "do-query" :depends-on ("package" "wrapper"))
-               (:file "sparql" :depends-on ("package" "wrapper"))))
+               (:file "wrapper" :depends-on ("package" "bindings"))))
