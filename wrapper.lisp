@@ -11,8 +11,8 @@
 	v)))
 
 (defun prepare-threads (&optional (n (get-number-processors)))
-  (init-threads)
-  (plan-with-nthreads n))
+  (%fftw_init_threads)
+  (%fftw_plan_with_nthreads n))
 
 (defun plan (in &optional out)
   (declare (type (array (complex double-float) *) in))
@@ -23,27 +23,27 @@
 	(let* ((rank (array-rank in))
 	       (dims-in (make-array rank :element-type '(signed-byte 32)
 				    :initial-contents (array-dimensions in))))
-	  (format t "array alignment ~a" (list in-sap out-sap))
 	  ;; this should work for 
 	  (with-pointer-to-vector-data (in-sap in-d)
 	    (with-pointer-to-vector-data (out-sap out-d)
 	      (with-pointer-to-vector-data (dims-sap dims-in)
-		(fftw_plan_dft rank dims-sap in-sap out-sap
+		(%fftw_plan_dft rank dims-sap in-sap out-sap
 			       +forward+ +estimate+))))))))
 
 (defun ft (in)
-  (declare (type (array (complex double-float) *) in))
-  (let* ((out1 (make-array (reduce #'* (array-dimensions in))
-			   :element-type '(complex double-float)))
-	 (out (make-array (array-dimensions in)
-			  :element-type '(complex double-float)
-			  :displaced-to out1)))
-    (if (and (array-displacement in)
-	     (equal '(complex double-float) (array-element-type in)))
-	(with-pointer-to-vector-data (in-sap in) ;; i just do this in order to pin the array
-	  (with-pointer-to-vector-data (out-sap out)
-	    (let ((plan (plan in out)))
-	      (fftw_execute plan))))
-	(format t "input array is not displaced to 1d array. I can't work with this"))
-    out))
+  ; (declare (type (array (complex double-float) *) in))
+  (let* ((out1 (make-array (array-total-size in) :element-type '(complex double-float)))
+	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
+			   :displaced-to out1))
+	 (in1 (array-displacement in)))
+    (if (and in1 (equal '(complex double-float) (array-element-type in)))
+	(progn
+	 (with-pointer-to-vector-data (in-sap in1)
+	   (declare (ignorable in-sap)) ;; i just do this in order to pin the array
+	   (with-pointer-to-vector-data (out-sap out1)
+	     (declare (ignorable out-sap))
+	     (let ((plan (plan in out)))
+	       (%fftw_execute plan))))
+	 out)
+	(error "input array is not displaced to 1d array. I can't work with this."))))
 
