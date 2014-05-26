@@ -12,8 +12,21 @@
 
 (fftw:prepare-threads)
 
-(let* ((n 1024)
-       (a1 (make-array (* n n) :element-type '(complex double-float)))
-       (a (make-array (list n n) :element-type '(complex double-float)
+(let* ((w 37)
+       (h 12)
+       (a1 (make-array (* w h) :element-type '(complex double-float)))
+       (a (make-array (list h w) :element-type '(complex double-float)
 		      :displaced-to a1)))
-  (defparameter *bla* (fftw:ft a)))
+  (dotimes (i w)
+    (dotimes (j h)
+      (setf (aref a j i) (complex (sin (* 8 pi (+ (/ i w) (/ j h))))))))
+  (defparameter *bla* (fftw:ft a))
+  (progn
+  (terpri)
+  (destructuring-bind (h w) (array-dimensions *bla*)
+    (dotimes (j h)
+      (dotimes (i w)
+	(format t "~1,'0d" (floor (abs (aref *bla* j i)) (/ (* h w) 9))))
+      (terpri)))))
+
+
