@@ -75,3 +75,8 @@ output:
 0000000000000000000000000000000000000
 0000000000000000000000000000000000000
 ```
+
+# supported implementations:
+
+SBCL .. works
+CCL .. doesn't work, problem with array transfer

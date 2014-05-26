@@ -1,5 +1,11 @@
 (declaim (optimize (debug 3) (safety 3) (speed 0)))
 #+nil
+(require 'asdf)
+#+nil
+(load "~/quicklisp/setup.lisp")
+#+nil
+(ql:quickload 'cffi)
+#+nil
 (setf asdf:*central-registry*
    ;; Default directories, usually just the ``current directory''
   '(*default-pathname-defaults*

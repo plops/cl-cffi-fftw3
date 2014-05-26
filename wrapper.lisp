@@ -38,14 +38,15 @@
 	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
 			   :displaced-to out1))
 	 (in1 (array-displacement in)))
-    (if (and in1 (equal '(complex double-float) (array-element-type in)))
-	(progn
-	 (with-pointer-to-vector-data (in-sap in1)
-	   (declare (ignorable in-sap)) ;; i just do this in order to pin the array
-	   (with-pointer-to-vector-data (out-sap out1)
-	     (declare (ignorable out-sap))
-	     (let ((plan (plan in out)))
-	       (%fftw_execute plan))))
-	 out)
-	(error "input array is not displaced to 1d array. I can't work with this."))))
+    (progn ;if (and in1 (equal '(complex double-float) (array-element-type in)))
+      (progn
+	  (with-pointer-to-vector-data (in-sap in1)
+	    #+sbcl (declare (ignore in-sap)) ;; i just do this in order to pin the array
+	    (with-pointer-to-vector-data (out-sap out1)
+	      #+sbcl (declare (ignore out-sap))
+	      (let ((plan (plan in out)))
+		(%fftw_execute plan))))
+	  out)
+      ; (error "input array is not displaced to 1d array. I can't work with this.")
+      )))
 
