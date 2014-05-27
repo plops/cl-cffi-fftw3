@@ -20,15 +20,28 @@ calculations.
 
 
 ```
-ft a
+ft in [out]
 ```
 
 Plan and execute an out-of-place Fourier transform of the array
 'in'. The input array 'in' must be a displaced one-dimensional array.
-The transform is calculated out-of-place and the result is returned in
-a newly allocated array.
+The transform is calculated out-of-place if no output array 'out' is
+given.
 
+In Clozure Common Lisp the fastest speed can be obtained when
+preallocated arrays (using the function 
+make-foreign-complex-array-as-double
 
+``` make-foreign-complex-array-as-double dimension ```
+
+This function only makes sense for Clozure Common Lisp.  It allocates
+an array on the foreign stack and registers a finalizer to free the
+memory when the reference is no longer used.  dimension is a list of
+positive integers, e.g. '(17 23). Note that Clozure Common Lisp
+doesn't support (complex double-float) element types as heap-ivector.
+Until I find a better solution make-foreign-complex-array-as-double
+returns a double-float array with dimensions (17 23 2), i.e. the last
+dimension indexes real (0) and imaginary parts (1).
 
 ## example:
 

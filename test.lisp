@@ -27,8 +27,8 @@
 
 (fftw:prepare-threads)
 
-(let* ((w 1024)
-       (h 1024)
+(let* ((w 15)
+       (h 14)
        ;; allocate a 1d array
        #+nil (a1 (make-array (* w h) :element-type '(complex double-float)))
        ;; create a 2d array for access
@@ -52,12 +52,12 @@
    (defparameter *bla* (fftw:ft a b)))
 
   ;; print out each element of the array. scale data to lie within 0..9
-  #+nil (progn
+  (progn
     (terpri)
-    (destructuring-bind (h w) (array-dimensions *bla*)
+    (destructuring-bind (h w two) (array-dimensions *bla*)
       (dotimes (j h)
 	(dotimes (i w)
-	  (format t "~1,'0d" (floor (abs (aref *bla* j i)) (/ (* h w) 9))))
+	  (format t "~1,'0d" (floor (abs (complex (aref *bla* j i 0) (aref *bla* j i 1))) (/ (* h w) 9))))
 	(terpri)))))
 
 
