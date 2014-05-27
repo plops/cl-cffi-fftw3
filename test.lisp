@@ -27,24 +27,32 @@
 
 (fftw:prepare-threads)
 
-(let* ((w 57)
-       (h 12)
+(let* ((w 1024)
+       (h 1024)
        ;; allocate a 1d array
-       (a1 (make-array (* w h) :element-type '(complex double-float)))
+       #+nil (a1 (make-array (* w h) :element-type '(complex double-float)))
        ;; create a 2d array for access
-       (a (make-array (list h w) :element-type '(complex double-float)
-		      :displaced-to a1)))
+       (a (fftw:make-foreign-complex-array-as-double (list h w))
+	 #+nil (make-array (list h w) :element-type '(complex double-float)
+			 :displaced-to a1))
+       (b (fftw:make-foreign-complex-array-as-double (list h w))
+	 #+nil (make-array (list h w) :element-type '(complex double-float)
+			 :displaced-to a1)))
   
   ;; fill the 2d array with a sinosoidal grating    		    
   (dotimes (i w)
     (dotimes (j h)
-      (setf (aref a j i) (complex (sin (* 8 pi (+ (/ i w) (/ j h))))))))
+      #+nil (setf (aref a j i) (complex (sin (* 8 pi (+ (/ i w) (/ j h))))))
+      (setf (aref a j i 0) (sin (* 8 pi (+ (/ i w) (/ j h))))
+	    (aref a j i 1) 0d0)))
 
   ;; call fftw
-  (defparameter *bla* (fftw:ft a))
+  
+  (time
+   (defparameter *bla* (fftw:ft a b)))
 
   ;; print out each element of the array. scale data to lie within 0..9
-  (progn
+  #+nil (progn
     (terpri)
     (destructuring-bind (h w) (array-dimensions *bla*)
       (dotimes (j h)

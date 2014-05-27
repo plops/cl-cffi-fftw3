@@ -88,34 +88,41 @@ out-of-place transform. If only one is given, in-place transform."
        #+ccl (ccl::%heap-ivector-p (array-displacement a))))
 
 
-(defun ft (in ;&optional out
-		 )
+(defun ft (in &optional out-arg)
   "Plan and execute an out-of-place Fourier transform of the array
 'in'. SBCL allows to call the foreign function without copying the
 data but the input array 'in' must be a displaced one-dimensional
 array. In CCL, the input array and the output array are allocated on
 the foreign heap, i.e. if you don't use ccl:make-heap-ivector to
 allocate the arrays, the input and output data must be copied."
-  (declare (type (array (complex double-float) *) in))
-  (let* ((out1 (make-array (array-total-size in) :element-type '(complex double-float)))
-	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
-			   :displaced-to out1)))
+  #+sbcl (declare (type (array (complex double-float) *) in))
+  (let* ((out1 (unless out-arg (make-array (array-total-size in) :element-type '(complex double-float))))
+	 (out  (unless out-arg (make-array (array-dimensions in) :element-type '(complex double-float)
+			    :displaced-to out1))))
     #+ccl
-    (let* ((in1 (make-array (array-total-size in) :element-type '(complex double-float)
-			    :displaced-to in))
-	   (in-foreign (make-foreign-complex-array-as-double (array-dimensions in)))
+    (let* ((in-foreign (if (foreign-complex-array-as-double-p in)
+			   in
+			   (make-foreign-complex-array-as-double (array-dimensions in))))
 	   (in-foreign1 (array-displacement in-foreign))
-	   (out-foreign (make-foreign-complex-array-as-double (array-dimensions in)))
+	   (out-foreign (if (and out-arg (foreign-complex-array-as-double-p out-arg))
+			    out-arg
+			    (make-foreign-complex-array-as-double (array-dimensions in))))
 	   (out-foreign1 (array-displacement out-foreign)))
-      (dotimes (i (length in1))
-	(setf (aref in-foreign1 (* 2 i)) (realpart (aref in1 i))
-	      (aref in-foreign1 (+ 1 (* 2 i))) (imagpart (aref in1 i))))
+      (unless (foreign-complex-array-as-double-p in)
+	(let ((in1 (make-array (array-total-size in) :element-type '(complex double-float)
+			       :displaced-to in)))
+	  (dotimes (i (length in1))
+	    (setf (aref in-foreign1 (* 2 i)) (realpart (aref in1 i))
+		  (aref in-foreign1 (+ 1 (* 2 i))) (imagpart (aref in1 i))))))
       (let ((plan (plan in-foreign out-foreign)))
 	(%fftw_execute plan)
-	(dotimes (i (length out1))
-	  (setf (aref out1 i) (complex (aref out-foreign1 (* 2 i))
-				       (aref out-foreign1 (+ 1 (* 2 i))))))
-	out))
+	(if out-arg 
+	    out-arg
+	    (progn
+	      (dotimes (i (length out1))
+		(setf (aref out1 i) (complex (aref out-foreign1 (* 2 i))
+					     (aref out-foreign1 (+ 1 (* 2 i))))))
+	      out))))
     #+sbcl
     (let ((in1 (array-displacement in)))
       (if (and in1 (equal '(complex double-float) (array-element-type in)))

@@ -1,6 +1,7 @@
 (defpackage #:fftw
     (:use #:cl #:cffi)
     (:export
+     #:make-foreign-complex-array-as-double
      #:prepare-threads
      #:ft))
 
