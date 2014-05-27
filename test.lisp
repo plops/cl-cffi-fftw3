@@ -27,7 +27,7 @@
 
 (fftw:prepare-threads)
 
-(let* ((w 37)
+(let* ((w 57)
        (h 12)
        ;; allocate a 1d array
        (a1 (make-array (* w h) :element-type '(complex double-float)))
