@@ -93,17 +93,27 @@ out-of-place transform. If only one is given, in-place transform."
 (defmethod make-instance ((c complex-array-as-double) &key dims)
   #+ccl
   (with-slots (darray ivector) c
-    (setf 
-     ivector #+ccl (ccl:make-heap-ivector (* 2 (reduce #'* dims))
-					  'double-float)
-     #+sbcl
-     (make-array (* 2 (reduce #'* dims)) :element-type 'double-float)
-     darray (make-array (append dims (list 2))
-		 :element-type 'double-float
-		 :displaced-to ivector))))
+    ))
+
+(defun make-foreign-complex-array-as-double (dims)
+  (let* ((ivector #+ccl (ccl:make-heap-ivector (* 2 (reduce #'* dims))
+					       'double-float)
+		  #+sbcl
+		  (make-array (* 2 (reduce #'* dims)) :element-type 'double-float))
+	 (darray (make-array (append dims (list 2))
+			     :element-type 'double-float
+			    :displaced-to ivector)))
+    (trivial-garbage:finalize darray (lambda () 
+				       (format t "getting rid of object with size ~a~%" (length ivector))
+				       #+ccl (ccl:dispose-heap-ivector ivector)))))
+
+(defparameter *bla*  (make-foreign-complex-array-as-double (list 3 4)))
 
 
+(make-foreign-complex-array-as-double (list 1 1))
+(setf *bla* nil)
 
+(+ 14 4)
 
 (defun ft (in &optional out)
   "Plan and execute an out-of-place Fourier transform of the array
