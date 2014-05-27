@@ -19,11 +19,13 @@
   (%fftw_init_threads)
   (%fftw_plan_with_nthreads n))
 
-(defun plan (in &optional out dims)
+(defun plan (in &optional out)
+  "Plan a Fast fourier transform. If in and out are given,
+out-of-place transform. If only one is given, in-place transform."
   (declare (type (array (complex double-float) *) in))
   (let* ((in-d (array-displacement in))
 	 (out-d (array-displacement (if out out in))))
-    (if (not (and in-d out-d))
+   (if (not (and in-d out-d))
 	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
 	(let* ((rank (array-rank in)))
 	  ;;  http://ccl.clozure.com/ccl-documentation.html#Tutorial--Allocating-Foreign-Data-on-the-Lisp-Heap
@@ -74,12 +76,34 @@
 		 (%fftw_plan_dft rank dims-sap in-sap out-sap
 				 +forward+ +estimate+)))))))))
 
+(defparameter *bla* (ccl:make-heap-ivector (* 8 8 2) 'double-float))
 
-(defparameter *bla* (ccl:make-heap-ivector (* 4 4 2) 'double-float))
+(type-of *bla*)
 
-(ccl:dispose-heap-ivector *bla*)
+(defparameter *bla2* (make-array (list 8 8 2) :element-type 'double-float
+				 :displaced-to *bla*))
+(ccl::%heap-ivector-p (array-displacement *bla2*))
 
-(make-array (list 4 4) :element-type 'double-float :displaced-to *bla*)
+(type-of *bla2*)
+
+(defclass complex-array-as-double ()
+  ((darray :reader darray :type (array double-float *))
+   #+ccl (ivector :reader ivector :type (simple-array double-float 1))))
+
+(defmethod make-instance ((c complex-array-as-double) &key dims)
+  #+ccl
+  (with-slots (darray ivector) c
+    (setf 
+     ivector #+ccl (ccl:make-heap-ivector (* 2 (reduce #'* dims))
+					  'double-float)
+     #+sbcl
+     (make-array (* 2 (reduce #'* dims)) :element-type 'double-float)
+     darray (make-array (append dims (list 2))
+		 :element-type 'double-float
+		 :displaced-to ivector))))
+
+
+
 
 (defun ft (in &optional out)
   "Plan and execute an out-of-place Fourier transform of the array
@@ -101,8 +125,9 @@ allocate the arrays, the input and output data must be copied."
 	  (out-foreign (if (ccl::%heap-ivector-p out)
 			   out
 			  (ccl::make-heap-ivector (array-total-size in) '(complex double-float)))))
-      (dotimes (i (length in1))
-	(setf (aref in-foreign i) (aref in1 i)))
+      (unless (ccl::%heap-ivector-p in) 
+	(dotimes (i (length in1))
+	  (setf (aref in-foreign i) (aref in1 i))))
       )
     #+sbcl
     (let ((in1 (array-displacement in)))
