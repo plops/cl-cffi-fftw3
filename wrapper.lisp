@@ -27,7 +27,12 @@ out-of-place transform. If only one is given, in-place transform."
 	 (out-d (array-displacement (if out out in))))
    (if (not (and in-d out-d))
 	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
-	(let* ((rank (array-rank in)))
+	(let* ((dims #+sbcl (array-dimensions in)
+		     #+ccl (butlast (array-dimensions in)))
+	       (rank #+sbcl (array-rank in) 
+		     #+ccl (if (foreign-complex-array-as-double-p in)
+			       (1- (array-rank in))
+			       (error "please give plan an array that has been allocated on the foreign heap."))))
 	  ;;  http://ccl.clozure.com/ccl-documentation.html#Tutorial--Allocating-Foreign-Data-on-the-Lisp-Heap
 	  ;; for clozure cl, foreign objects on the heap must be
 	  ;; allocated on a special heap and freed after use. as far
@@ -40,33 +45,15 @@ out-of-place transform. If only one is given, in-place transform."
 	  
 	  #+ccl
 	  (progn
-	    (when (and out (not (ccl::%heap-ivector-p out)))
-	      (error "ccl only supports reusing the output array, if it is a heap-ivector"))
-	    (let ((dims-in-foreign (ccl::make-heap-ivector rank '(signed-byte 32)))
-		  (dims-in (if (ccl::%heap-ivector-p in)
-			       dims
-			       (array-dimensions in))))
-	      (loop for i below rank and j in dims-in do
+	    (when (and out (not (foreign-complex-array-as-double-p out)))
+	      (error "ccl only supports reusing the output array, if it was allocated as a heap-ivector"))
+	    (let ((dims-in-foreign (ccl::make-heap-ivector rank '(signed-byte 32))))
+	      (loop for i below rank and j in dims do
 		   (setf (aref dims-in-foreign i) j))
 	      
-	      (let ((in-foreign (if (ccl::%heap-ivector-p in)
-				    in
-				    (ccl::make-heap-ivector (array-total-size in) '(complex double-float))))
-		    (out-foreign (if (ccl::%heap-ivector-p out)
-				    out
-				    (ccl::make-heap-ivector (array-total-size in) '(complex double-float)))))
-
-		(unless (ccl::%heap-ivector-p in) ;; only copy data, if in isn't already a heap ivector
-		  (let ((in1 (make-array (array-total-size in) :element-type '(complex double-float)
-					 :displaced-to in)))
-		    (dotimes (i (length in1))
-		      (setf (aref in-foreign i) (aref in1 i)))))
-		(prog1
-		    (values (%fftw_plan_dft rank dims-in-foreign in-foreign out-foreign
-					    +forward+ +estimate+)
-			    in-foreign out-foreign)
-		  (ccl:dispose-heap-ivector dims-in-foreign))))
-	    )
+	      (prog1 
+		  (%fftw_plan_dft rank dims-in-foreign in out +forward+ +estimate+)
+		(ccl:dispose-heap-ivector dims-in-foreign))))
 	  #+sbcl
 	  (let ((dims-in (make-array rank :element-type '(signed-byte 32)
 				     :initial-contents (array-dimensions in))))
@@ -107,6 +94,14 @@ out-of-place transform. If only one is given, in-place transform."
 				       (format t "getting rid of object with size ~a~%" (length ivector))
 				       #+ccl (ccl:dispose-heap-ivector ivector)))))
 
+(car (last (array-dimensions *bla*)))
+
+(defun foreign-complex-array-as-double-p (a)
+  (and (= 2 (car (last (array-dimensions a))))
+       #+ccl (ccl::%heap-ivector-p (array-displacement a))))
+
+(foreign-complex-array-as-double-p *bla*)
+
 (defparameter *bla*  (make-foreign-complex-array-as-double (list 3 4)))
 
 
@@ -127,17 +122,14 @@ allocate the arrays, the input and output data must be copied."
 	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
 			   :displaced-to out1)))
     #+ccl
-    (let ((in1 (make-array (array-total-size in) :element-type '(complex double-float)
-			   :displaced-to in))
-	  (in-foreign (if (ccl::%heap-ivector-p in)
-			  in
-			  (ccl::make-heap-ivector (array-total-size in) '(complex double-float))))
-	  (out-foreign (if (ccl::%heap-ivector-p out)
-			   out
-			  (ccl::make-heap-ivector (array-total-size in) '(complex double-float)))))
-      (unless (ccl::%heap-ivector-p in) 
-	(dotimes (i (length in1))
-	  (setf (aref in-foreign i) (aref in1 i))))
+    (let* ((in1 (make-array (array-total-size in) :element-type '(complex double-float)
+			    :displaced-to in))
+	   (in-foreign (make-foreign-complex-array-as-double (array-dimensions in)))
+	   (in-foreign1 (array-displacement in-foreign))
+	   (out-foreign (make-foreign-complex-array-as-double (array-dimensions in))))
+      (dotimes (i (length in1))
+	(setf (aref in-foreign1 (* 2 i)) (realpart (aref in1 i))
+	      (aref in-foreign1 (+ 1 (* 2 i))) (imagpart (aref in1 i))))
       )
     #+sbcl
     (let ((in1 (array-displacement in)))
