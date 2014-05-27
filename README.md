@@ -78,5 +78,12 @@ output:
 
 # supported implementations:
 
-SBCL .. works (linux64, win32 8.1)
-CCL .. doesn't work, problem with array transfer (linux64, win32 8.1)
+* SBCL .. works (linux64, win32 8.1)
+* CCL  .. works (linux64, win32 8.1)
+
+
+# todo
+
+* improve performance for CCL
+
+* for best performance fftw3 wants its arrays to be allocated with a particular alignment. i haven't checked if this is the case
