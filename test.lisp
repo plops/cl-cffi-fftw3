@@ -7,6 +7,10 @@
 (load "c:/users/minyi_000/quicklisp/setup.lisp")
 #+nil
 (ql:quickload 'cffi)
+#+nil
+(ql:quickload 'trivial-garbage)
+
+
 
 (setf asdf:*central-registry*
    ;; Default directories, usually just the ``current directory''
