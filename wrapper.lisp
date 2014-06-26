@@ -70,18 +70,18 @@ out-of-place transform. If only one is given, in-place transform."
 
 (defun make-foreign-complex-array-as-double (dims)
   (multiple-value-bind (ivector iptr) #+ccl (ccl:make-heap-ivector (* 2 (reduce #'* dims))
-							     'double-float)
+								   'double-float)
 		       #+sbcl (let ((a (make-array (* 2 (reduce #'* dims)) :element-type 'double-float)))
-				(values a (sb-ext:vector-sap a)))
-   (let* ((darray (make-array (append dims (list 2))
-			      :element-type 'double-float
-			      :displaced-to ivector)))
-     ;; the following uses ccl:terminate-when-unreachable. it should be
-     ;; possible to use this in cffi
-     (trivial-garbage:finalize darray (lambda () 
-					(format t "getting rid of object with size ~a~%" (length ivector))
-					#+ccl (ccl:dispose-heap-ivector ivector)))
-     (values darray iptr))))
+				(values a (sb-ext::vector-sap a)))
+		       (let* ((darray (make-array (append dims (list 2))
+						  :element-type 'double-float
+						  :displaced-to ivector)))
+			 ;; the following uses ccl:terminate-when-unreachable. it should be
+			 ;; possible to use this in cffi
+			 (trivial-garbage:finalize darray (lambda () 
+							    (format t "getting rid of object with size ~a~%" (length ivector))
+							    #+ccl (ccl:dispose-heap-ivector ivector)))
+			 (values darray iptr))))
 
 (defun foreign-complex-array-as-double-p (a)
   (and (= 2 (car (last (array-dimensions a))))
