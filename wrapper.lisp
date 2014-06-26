@@ -88,6 +88,7 @@ out-of-place transform. If only one is given, in-place transform."
        #+ccl (ccl::%heap-ivector-p (array-displacement a))))
 
 
+(declaim (optimize (debug 3)))
 (defun ft (in &optional out-arg)
   "Plan and execute an out-of-place Fourier transform of the array
 'in'. SBCL allows to call the foreign function without copying the
@@ -96,9 +97,9 @@ array. In CCL, the input array and the output array are allocated on
 the foreign heap, i.e. if you don't use ccl:make-heap-ivector to
 allocate the arrays, the input and output data must be copied."
   #+sbcl (declare (type (array (complex double-float) *) in))
-  (let* ((out1 (unless out-arg (make-array (array-total-size in) :element-type '(complex double-float))))
-	 (out  (unless out-arg (make-array (array-dimensions in) :element-type '(complex double-float)
-			    :displaced-to out1))))
+  (let* ((out1 (or (and out-arg (array-displacement out-arg)) (make-array (array-total-size in) :element-type '(complex double-float))))
+	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
+			   :displaced-to out1)))
     #+ccl
     (let* ((in-foreign (if (foreign-complex-array-as-double-p in)
 			   in
