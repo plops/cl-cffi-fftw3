@@ -16,7 +16,7 @@
 
 (defun prepare-threads (&optional (n (get-number-processors)))
   "Initialize fftw3_threads to use n threads. On Linux n defaults to the number of processors."
-  (unless (= 0 (%fftw_init_threads))
+  (when (= 0 (%fftw_init_threads))
     (error "prepare-threads: error by fftw_init_threads")) ;; fixme occasionally i should call fftw_cleanup_threads
   (%fftw_plan_with_nthreads n))
 

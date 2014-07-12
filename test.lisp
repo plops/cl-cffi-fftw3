@@ -23,9 +23,32 @@
 #+nil
 (asdf:load-system "fftw")
 
+(fftw:prepare-threads 2)
+#+nli
+(fftw::%fftw_plan_with_nthreads 2)
+(defparameter *bla* nil)
+(sb-ext:gc :full t)
+(room)
+
+(time
+ (let* ((n 64)
+	(a n)
+	(b n)
+	(c n)
+	(d n)
+	(q1 (make-array (* a b c d) :element-type '(complex double-float)))
+	(p1 (make-array (* a b c d) :element-type '(complex double-float)))
+	(q (make-array (list a b c d) :element-type '(complex double-float)
+		       :displaced-to q1))
+	(p (make-array (list a b c d) :element-type '(complex double-float)
+		       :displaced-to p1)))
+   (fftw:ft q :out-arg p)
+   nil))
 
 
-(fftw:prepare-threads)
+
+(/ (* 16d0 (expt 84 4))
+   (expt 1024 2))
 
 (let* ((w 15)
        (h 14)
