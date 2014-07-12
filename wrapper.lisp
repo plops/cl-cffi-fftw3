@@ -16,10 +16,11 @@
 
 (defun prepare-threads (&optional (n (get-number-processors)))
   "Initialize fftw3_threads to use n threads. On Linux n defaults to the number of processors."
-  (%fftw_init_threads)
+  (unless (= 0 (%fftw_init_threads))
+    (error "prepare-threads: error by fftw_init_threads")) ;; fixme occasionally i should call fftw_cleanup_threads
   (%fftw_plan_with_nthreads n))
 
-(defun plan (in &optional out)
+(defun plan (in &key out w h)
   "Plan a Fast fourier transform. If in and out are given,
 out-of-place transform. If only one is given, in-place transform."
   #+sbcl (declare (type (array (complex double-float) *) in))
@@ -60,12 +61,12 @@ out-of-place transform. If only one is given, in-place transform."
 		  (ccl:dispose-heap-ivector dims-in-foreign)))))
 	  #+sbcl
 	  (let ((dims-in (make-array rank :element-type '(signed-byte 32)
-				     :initial-contents (array-dimensions in))))
-	   (with-pointer-to-vector-data (in-sap in-d)
-	     (with-pointer-to-vector-data (out-sap out-d)
-	       (with-pointer-to-vector-data (dims-sap dims-in)
-		 (%fftw_plan_dft rank dims-sap in-sap out-sap
-				 +forward+ +estimate+)))))))))
+				     :initial-contents (or (and (and w h) (list h w))
+							   dims))))
+	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
+	     (%fftw_plan_dft rank (sb-sys:vector-sap dims-in) (sb-sys:vector-sap in-d)
+			     (sb-sys:vector-sap out-d)
+			     +forward+ +estimate+)))))))
 
 
 (defun make-foreign-complex-array-as-double (dims)
@@ -88,8 +89,13 @@ out-of-place transform. If only one is given, in-place transform."
        #+ccl (ccl::%heap-ivector-p (array-displacement a))))
 
 
+;; thread safety: fftw_execute is the only function that can be called
+;; from multiple threads. the planner shouldn't be called from
+;; multiple
+;; threads. http://www.fftw.org/doc/Thread-safety.html#Thread-safety
+
 (declaim (optimize (debug 3)))
-(defun ft (in &optional out-arg)
+(defun ft (in &key out-arg w h)
   "Plan and execute an out-of-place Fourier transform of the array
 'in'. SBCL allows to call the foreign function without copying the
 data but the input array 'in' must be a displaced one-dimensional
@@ -125,16 +131,29 @@ allocate the arrays, the input and output data must be copied."
 					     (aref out-foreign1 (+ 1 (* 2 i))))))
 	      out))))
     #+sbcl
-    (let ((in1 (array-displacement in)))
-      (if (and in1 (equal '(complex double-float) (array-element-type in)))
-	 (progn
-	   (with-pointer-to-vector-data (in-sap in1)
-	     (declare (ignore in-sap)) ;; i just do this in order to pin the array
-	     (with-pointer-to-vector-data (out-sap out1)
-	       (declare (ignore out-sap))
-	       (let ((plan (plan in out)))
-		 (%fftw_execute plan))))
-	   out)
-	 (error "input array is not displaced to 1d array. I can't work with this.")))
+    (if (sb-impl::array-header-p in)
+	(if (sb-impl::%array-displaced-p in)
+	    (let ((in1 (array-displacement in)))
+	      (if (and in1 (equal '(complex double-float) (array-element-type in)))
+	       (progn
+		 (with-pointer-to-vector-data (in-sap in1)
+		   (declare (ignore in-sap)) ;; i just do this in order to pin the array
+		   (with-pointer-to-vector-data (out-sap out1)
+		     (declare (ignore out-sap))
+		     (let ((plan (plan in :out out :w w :h h)))
+		       (%fftw_execute plan))))
+		 out)
+	       (error "input array is not complex double-float. I can't work with this.")
+	       ))
+	    (let ((in1 (sb-ext:array-storage-vector in)))
+	      (progn
+		 (with-pointer-to-vector-data (in-sap in1)
+		   (declare (ignore in-sap)) ;; i just do this in order to pin the array
+		   (with-pointer-to-vector-data (out-sap out1)
+		     (declare (ignore out-sap))
+		     (let ((plan (plan in :out out :w w :h h)))
+		       (%fftw_execute plan))))
+		 out)))
+	(error "input array is not displaced to 1d array. I can't work with this."))
     ))
 
