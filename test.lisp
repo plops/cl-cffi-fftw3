@@ -31,7 +31,7 @@
 (room)
 
 (time
- (let* ((n 64)
+ (let* ((n 84)
 	(a n)
 	(b n)
 	(c n)
@@ -43,6 +43,20 @@
 	(p (make-array (list a b c d) :element-type '(complex double-float)
 		       :displaced-to p1)))
    (fftw:ft q :out-arg p)
+   nil))
+
+(time
+ (let* ((n 512)
+	(a n)
+	(b n)
+	
+	(q1 (make-array (* a b ) :element-type '(complex double-float)))
+	(p1 (make-array (* a b ) :element-type '(complex double-float)))
+	(q (make-array (list a b ) :element-type '(complex double-float)
+		       :displaced-to q1))
+	(p (make-array (list a b ) :element-type '(complex double-float)
+		       :displaced-to p1)))
+   (dotimes (i 100) (fftw:ft q :out-arg p))
    nil))
 
 
