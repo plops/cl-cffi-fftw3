@@ -57,7 +57,7 @@
 	(p (make-array (list a b ) :element-type '(complex double-float)
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
-     (let ((plan (fftw::plan q :out p :flag fftw::+measure+)))
+     (let ((plan (fftw::plan q :out p :flag fftw::+patient+)))
        (time (dotimes (i 100) (fftw::%fftw_execute plan)))))
    nil))
 
