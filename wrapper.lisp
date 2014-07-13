@@ -95,7 +95,7 @@ out-of-place transform. If only one is given, in-place transform."
 ;; threads. http://www.fftw.org/doc/Thread-safety.html#Thread-safety
 
 (declaim (optimize (debug 3)))
-(defun ft (in &key out-arg w h)
+(defun ft (in &key out-arg w h (flag +estimate+))
   "Plan and execute an out-of-place Fourier transform of the array
 'in'. SBCL allows to call the foreign function without copying the
 data but the input array 'in' must be a displaced one-dimensional
@@ -140,7 +140,7 @@ allocate the arrays, the input and output data must be copied."
 		   (declare (ignore in-sap)) ;; i just do this in order to pin the array
 		   (with-pointer-to-vector-data (out-sap out1)
 		     (declare (ignore out-sap))
-		     (let ((plan (plan in :out out :w w :h h)))
+		     (let ((plan (plan in :out out :w w :h h :flag flag)))
 		       (%fftw_execute plan))))
 		 out)
 	       (error "input array is not complex double-float. I can't work with this.")

@@ -42,7 +42,7 @@
 		       :displaced-to q1))
 	(p (make-array (list a b c d) :element-type '(complex double-float)
 		       :displaced-to p1)))
-   (fftw:ft q :out-arg p)
+   (fftw:ft q :out-arg p :flag fftw::+measure+)
    nil))
 
 (time
