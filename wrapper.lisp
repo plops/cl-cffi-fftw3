@@ -20,7 +20,7 @@
     (error "prepare-threads: error by fftw_init_threads")) ;; fixme occasionally i should call fftw_cleanup_threads
   (%fftw_plan_with_nthreads n))
 
-(defun plan (in &key out w h)
+(defun plan (in &key out w h (flag +estimate+))
   "Plan a Fast fourier transform. If in and out are given,
 out-of-place transform. If only one is given, in-place transform."
   #+sbcl (declare (type (array (complex double-float) *) in))
@@ -66,7 +66,7 @@ out-of-place transform. If only one is given, in-place transform."
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
 	     (%fftw_plan_dft rank (sb-sys:vector-sap dims-in) (sb-sys:vector-sap in-d)
 			     (sb-sys:vector-sap out-d)
-			     +forward+ +estimate+)))))))
+			     +forward+ flag)))))))
 
 
 (defun make-foreign-complex-array-as-double (dims)
@@ -149,6 +149,7 @@ allocate the arrays, the input and output data must be copied."
 	      (progn
 		 (with-pointer-to-vector-data (in-sap in1)
 		   (declare (ignore in-sap)) ;; i just do this in order to pin the array
+;; the array must be pinned from plan creation to execution
 		   (with-pointer-to-vector-data (out-sap out1)
 		     (declare (ignore out-sap))
 		     (let ((plan (plan in :out out :w w :h h)))

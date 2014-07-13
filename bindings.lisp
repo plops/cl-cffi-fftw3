@@ -9,6 +9,7 @@
 (defconstant +backward+ 1)
 (defconstant +measure+ 0)
 (defconstant +estimate+ (ash 1 6)) ;; array isn't overwritten during planning
+(defconstant +patient+ (ash 1 5)) 
 
 ;; types
 

@@ -56,7 +56,9 @@
 		       :displaced-to q1))
 	(p (make-array (list a b ) :element-type '(complex double-float)
 		       :displaced-to p1)))
-   (dotimes (i 100) (fftw:ft q :out-arg p))
+   (sb-sys:with-pinned-objects (p q p1 q1)
+     (let ((plan (fftw::plan q :out p :flag fftw::+measure+)))
+       (time (dotimes (i 100) (fftw::%fftw_execute plan)))))
    nil))
 
 
