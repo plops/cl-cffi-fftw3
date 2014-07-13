@@ -31,7 +31,7 @@
 (room)
 
 (time
- (let* ((n 84)
+ (let* ((n 64)
 	(a n)
 	(b n)
 	(c n)
