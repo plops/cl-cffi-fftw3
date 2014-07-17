@@ -96,6 +96,35 @@
 
 (let* ((n 512)
 	(no (+ 1 (floor n 2)))
+	(i1 (make-array n :element-type 'double-float))
+	(o1 (make-array no :element-type '(complex double-float))))
+   (sb-sys:with-pinned-objects (i1 o1)
+     (let ((plan (fftw::rplan i1 :out o1 :flag fftw::+patient+)))
+       (time (dotimes (i 1000) (fftw::%fftw_execute plan)))))
+   nil)
+
+(let* ((n 512)
+	(no (+ 1 (floor n 2)))
+	(i1 (make-array n :element-type 'double-float))
+       (o1 (make-array no :element-type '(complex double-float)))
+       (dims-in (make-array 1 :element-type '(signed-byte 32)
+			    :initial-contents (list 512))))
+   (sb-sys:with-pinned-objects (i1 o1)
+     (fftw::%fftw_plan_dft_r2c_1d 512
+			  (sb-sys:vector-sap i1)
+			  (sb-sys:vector-sap o1)
+			  fftw::+forward+ fftw::+measure+
+			  )))
+
+(sb-sys:with-pinned-objects (in-d out-d dims-in)
+  (let ((r ))
+    (when (cffi:null-pointer-p r)
+		  (error "plan_dft_r2c didn't succeed."))
+		r))
+
+
+(let* ((n 512)
+	(no (+ 1 (floor n 2)))
 	(i1 (make-array n :element-type 'single-float))
 	(o1 (make-array no :element-type '(complex single-float))))
    (sb-sys:with-pinned-objects (i1 o1)
@@ -110,6 +139,7 @@
      (let ((plan (fftw::planf i1 :out o1 :flag fftw::+patient+)))
        (time (dotimes (i 100000) (fftw::%fftwf_execute plan)))))
    nil)
+
 
 
 (let* ((w 15)

@@ -43,6 +43,23 @@
   (sign :int)
   (flags :unsigned-int))
 
+(defcfun (%fftw_plan_dft_r2c "fftw_plan_dft_r2c")
+    plan-pointer
+  (rank :int)
+  (n (:pointer :int))
+  (in :pointer)
+  (out :pointer)
+  (sign :int)
+  (flags :unsigned-int))
+
+(defcfun (%fftw_plan_dft_r2c_1d "fftw_plan_dft_1d")
+    plan-pointer
+  (n :int)
+  (in :pointer)
+  (out :pointer)
+  (sign :int)
+  (flags :unsigned-int))
+
 (defcfun (%fftwf_plan_dft_r2c "fftwf_plan_dft_r2c")
     plan-pointer
   (rank :int)
