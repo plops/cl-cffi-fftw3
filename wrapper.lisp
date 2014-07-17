@@ -75,14 +75,13 @@ out-of-place transform. If only one is given, in-place transform."
 		  (error "plan_dft didn't succeed."))
 		r)))))))
 
-
 (defun rplanf (in &key out w h (flag +estimate+) (sign +forward+))
   "Plan a Fast fourier transform with real input of single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
   (declare (type (array single-float *) in))
   (unless out
     (error "in-place transform not supported."))
-  (let* ((in-d (array-displacement in))
-	 (out-d (array-displacement out)))
+  (let* ((in-d (or (array-displacement in) in))
+	 (out-d (or (array-displacement out) out)))
     (if (not (and in-d out-d))
 	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
 	(let* ((dims (array-dimensions in))

@@ -54,6 +54,7 @@
 		       :displaced-to p1)))
    (fftw:ft q :out-arg p :flag fftw::+measure+)
    nil))
+;; 0.371s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx, meas
 
 (time
  (let* ((n 512)
@@ -67,12 +68,16 @@
 	(p (make-array (list a b ) :element-type '(complex double-float)
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
-     (let ((plan (fftw::plan q :out p :flag fftw::+measure+)))
+     (let ((plan (fftw::plan q :out p :flag fftw::+patient+)))
        (time (dotimes (i 100) (fftw::%fftw_execute plan)))))
    nil))
+;; n=512
 ;; 0.349s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz
 ;; 0.429s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx
 
+;; n=580
+;; 1.105s 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx
+;; 1.068s 4 threads 
 (time
  (let* ((n 512)
 	(a n)
@@ -89,9 +94,15 @@
        (time (dotimes (i 100) (fftw::%fftwf_execute plan)))))
    nil))
 
+(let* ((n 512)
+	(no (+ 1 (floor n 2)))
+	(i1 (make-array n :element-type 'single-float))
+	(o1 (make-array no :element-type '(complex single-float))))
+   (sb-sys:with-pinned-objects (i1 o1)
+     (let ((plan (fftw::rplanf i1 :out o1 :flag fftw::+patient+)))
+       (time (dotimes (i 1000) (fftw::%fftwf_execute plan)))))
+   nil)
 
-(/ (* 16d0 (expt 84 4))
-   (expt 1024 2))
 
 (let* ((w 15)
        (h 14)
