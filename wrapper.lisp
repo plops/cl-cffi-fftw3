@@ -18,11 +18,11 @@
   "Initialize fftw3_threads to use n threads. On Linux n defaults to the number of processors."
   (when (= 0 (%fftw_init_threads))
     (error "prepare-threads: error by fftw_init_threads"))
-  (when (= 0 (%sfftw_init_threads))
-    (error "prepare-threads: error by sfftw_init_threads"))
+  (when (= 0 (%fftwf_init_threads))
+    (error "prepare-threads: error by fftwf_init_threads"))
   ;; fixme occasionally i should call fftw_cleanup_threads
   (%fftw_plan_with_nthreads n)
-  (%sfftw_plan_with_nthreads n))
+  (%fftwf_plan_with_nthreads n))
 
 (defun plan (in &key out w h (flag +estimate+) (sign +forward+))
   "Plan a Fast fourier transform. If in and out are given,
@@ -92,7 +92,7 @@ out-of-place transform. If only one is given, in-place transform."
 			   (+ 1 (floor (first (last dims-l)) 2)))
 			(array-total-size out-d)))
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
-	      (let ((r (%sfftw_plan_dft_r2c  rank
+	      (let ((r (%fftwf_plan_dft_r2c  rank
 					   (sb-sys:vector-sap dims-in)
 					   (sb-sys:vector-sap in-d)
 					   (sb-sys:vector-sap out-d)
@@ -217,6 +217,6 @@ single-float array 'in'."
 		     (t (error "input array is neither displaced to 1d array nor simple-array. I can't work with this.")))))
 	  (let ((plan (srplan in :out out :w w :h h
 			      :flag flag :sign sign)))
-	    (%sfftw_execute plan))
+	    (%fftwf_execute plan))
 	  out)))))
 

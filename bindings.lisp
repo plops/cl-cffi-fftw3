@@ -20,7 +20,7 @@
 
 (defcfun (%fftw_execute "fftw_execute")
     :void (plan plan-pointer))
-(defcfun (%sfftw_execute "sfftw_execute")
+(defcfun (%fftwf_execute "fftwf_execute")
     :void (plan plan-pointer))
 (defcfun (%sftw_destroy_plan "fftw_destroy_plan")
     :void (plan plan-pointer))
@@ -34,7 +34,7 @@
   (out :pointer) ;; complex double-float
   (sign :int)
   (flags :unsigned-int))
-(defcfun (%sfftw_plan_dft "sfftw_plan_dft")
+(defcfun (%fftwf_plan_dft "fftwf_plan_dft")
     plan-pointer
   (rank :int)
   (n (:pointer :int))
@@ -43,7 +43,7 @@
   (sign :int)
   (flags :unsigned-int))
 
-(defcfun (%sfftw_plan_dft_r2c "sfftw_plan_dft_r2c")
+(defcfun (%fftwf_plan_dft_r2c "fftwf_plan_dft_r2c")
     plan-pointer
   (rank :int)
   (n (:pointer :int))
@@ -55,11 +55,11 @@
 ;; functions in the fftw3_threads library
 
 (defcfun (%fftw_init_threads "fftw_init_threads") :int)
-(defcfun (%sfftw_init_threads "sfftw_init_threads") :int)
+(defcfun (%fftwf_init_threads "fftwf_init_threads") :int)
 (defcfun (%fftw_plan_with_nthreads "fftw_plan_with_nthreads")
     :void
   (nthreads :int))
-(defcfun (%sfftw_plan_with_nthreads "sfftw_plan_with_nthreads")
+(defcfun (%fftwf_plan_with_nthreads "fftwf_plan_with_nthreads")
     :void
   (nthreads :int))
 

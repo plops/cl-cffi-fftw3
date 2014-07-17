@@ -81,7 +81,7 @@
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
      (let ((plan (fftw::srplan q :out p :flag fftw::+patient+)))
-       (time (dotimes (i 100) (fftw::%sfftw_execute plan)))))
+       (time (dotimes (i 100) (fftw::%fftwf_execute plan)))))
    nil))
 
 
