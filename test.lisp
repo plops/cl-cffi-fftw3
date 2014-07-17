@@ -25,12 +25,14 @@
 #+nil
 (fftw:prepare-threads 2)
 #+nli
-(fftw::%fftw_plan_with_nthreads 2)
+(fftw::%fftw_plan_with_nthreads 4)
 #+nil
-(fftw::%fftwf_plan_with_nthreads 2)
+(fftw::%fftwf_plan_with_nthreads 4)
 
 #+nil
 (fftw::%fftw_export_wisdom_to_filename "/home/martin/fftw-x201.wisdom")
+#+nil
+(fftw::%fftw_export_wisdom_to_filename "/home/martin/fftw-bluechip_4.wisdom")
 #+nil
 (fftw::%fftw_import_wisdom_from_filename "/home/martin/fftw-x201.wisdom")
 #+nil
@@ -55,6 +57,10 @@
    (fftw:ft q :out-arg p :flag fftw::+measure+)
    nil))
 ;; 0.371s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx, meas
+;; 0.184s on 2 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total .36s)
+;; 0.112s on 4 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total .42s)
+;; for i in `find /sys|grep scaling_gover` ;do echo performance > $i;done
+
 
 (time
  (let* ((n 512)
@@ -74,10 +80,14 @@
 ;; n=512
 ;; 0.349s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz
 ;; 0.429s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx
+;; 0.059s on 4 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total .228s)
+;; 0.156s on 2 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total .304s)
 
 ;; n=580
 ;; 1.105s 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx
 ;; 1.068s 4 threads 
+;; 0.303s on 4 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total 1.184s)
+
 (time
  (let* ((n 512)
 	(a n)
@@ -90,7 +100,7 @@
 	(p (make-array (list a bo ) :element-type '(complex single-float)
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
-     (let ((plan (fftw::rplanf2 q :out p :flag fftw::+patient+)))
+     (let ((plan (fftw::rplanf2 q :out p :flag fftw::+estimate+)))
        (time (dotimes (i 100) (fftw::%fftwf_execute plan)))))
    nil))
 
