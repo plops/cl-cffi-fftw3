@@ -27,7 +27,14 @@
 #+nli
 (fftw::%fftw_plan_with_nthreads 2)
 #+nil
-(fftw::%sfftw_plan_with_nthreads 2)
+(fftw::%fftwf_plan_with_nthreads 2)
+
+#+nil
+(fftw::%fftw_export_wisdom_to_filename "/home/martin/fftw-x201.wisdom")
+#+nil
+(fftw::%fftw_import_wisdom_from_filename "/home/martin/fftw-x201.wisdom")
+#+nil
+(fftw::%fftwf_export_wisdom_to_filename "/home/martin/fftwf-x201.wisdom")
 
 (defparameter *bla* nil)
 (sb-ext:gc :full t)
@@ -60,7 +67,7 @@
 	(p (make-array (list a b ) :element-type '(complex double-float)
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
-     (let ((plan (fftw::plan q :out p :flag fftw::+patient+)))
+     (let ((plan (fftw::plan q :out p :flag fftw::+measure+)))
        (time (dotimes (i 100) (fftw::%fftw_execute plan)))))
    nil))
 ;; 0.349s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz
