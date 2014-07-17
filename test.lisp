@@ -26,6 +26,12 @@
 (fftw:prepare-threads 2)
 #+nli
 (fftw::%fftw_plan_with_nthreads 2)
+#+nil
+(fftw::%sfftw_plan_with_nthreads 2)
+
+#+nil
+(sb-alien::dlsym sb-alien::*runtime-dlhandle* "fftw_plan_with_nthreads")
+
 (defparameter *bla* nil)
 (sb-ext:gc :full t)
 (room)
@@ -60,7 +66,23 @@
      (let ((plan (fftw::plan q :out p :flag fftw::+patient+)))
        (time (dotimes (i 100) (fftw::%fftw_execute plan)))))
    nil))
+;; 0.349s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz
 
+(time
+ (let* ((n 512)
+	(a n)
+	(b n)
+	(bo (+ 1 (floor n 2)))
+	(q1 (make-array (* a b ) :element-type 'single-float))
+	(p1 (make-array (* a bo ) :element-type '(complex single-float)))
+	(q (make-array (list a b ) :element-type 'single-float
+		       :displaced-to q1))
+	(p (make-array (list a bo ) :element-type '(complex single-float)
+		       :displaced-to p1)))
+   (sb-sys:with-pinned-objects (p q p1 q1)
+     (let ((plan (fftw::srplan q :out p :flag fftw::+patient+)))
+       (time (dotimes (i 100) (fftw::%sfftw_execute plan)))))
+   nil))
 
 
 (/ (* 16d0 (expt 84 4))
