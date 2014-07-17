@@ -17,10 +17,14 @@
 (defun prepare-threads (&optional (n (floor (get-number-processors) 2)))
   "Initialize fftw3_threads to use n threads. On Linux n defaults to the number of processors."
   (when (= 0 (%fftw_init_threads))
-    (error "prepare-threads: error by fftw_init_threads")) ;; fixme occasionally i should call fftw_cleanup_threads
-  (%fftw_plan_with_nthreads n))
+    (error "prepare-threads: error by fftw_init_threads"))
+  (when (= 0 (%fftwf_init_threads))
+    (error "prepare-threads: error by fftwf_init_threads"))
+  ;; fixme occasionally i should call fftw_cleanup_threads
+  (%fftw_plan_with_nthreads n)
+  (%fftwf_plan_with_nthreads n))
 
-(defun plan (in &key out w h (flag +estimate+))
+(defun plan (in &key out w h (flag +estimate+) (sign +forward+))
   "Plan a Fast fourier transform. If in and out are given,
 out-of-place transform. If only one is given, in-place transform."
   #+sbcl (declare (type (array (complex double-float) *) in))
@@ -64,9 +68,119 @@ out-of-place transform. If only one is given, in-place transform."
 				     :initial-contents (or (and (and w h) (list h w))
 							   dims))))
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
-	     (%fftw_plan_dft rank (sb-sys:vector-sap dims-in) (sb-sys:vector-sap in-d)
-			     (sb-sys:vector-sap out-d)
-			     +forward+ flag)))))))
+	      (let ((r (%fftw_plan_dft rank (sb-sys:vector-sap dims-in) (sb-sys:vector-sap in-d)
+				       (sb-sys:vector-sap out-d)
+				       sign flag)))
+		(when (cffi:null-pointer-p r)
+		  (error "plan_dft didn't succeed."))
+		r)))))))
+
+(defun rplan (in &key out w h (flag +estimate+))
+  "Plan a Fast fourier transform with real input of double float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
+  (declare (type (array double-float *) in))
+  (unless out
+    (error "in-place transform not supported."))
+  (let* ((in-d (or (array-displacement in) in))
+	 (out-d (or (array-displacement out) out)))
+    (if (not (and in-d out-d))
+	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
+	(let* ((dims (array-dimensions in))
+	       (rank (array-rank in)))
+	  (let* ((dims-l (or (and (and w h) (list h w))
+			    dims))
+		 (dims-in (make-array rank :element-type '(signed-byte 32)
+				      :initial-contents dims-l)))
+	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+			   (+ 1 (floor (first (last dims-l)) 2)))
+			(array-total-size out-d)))
+	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
+	      (let ((r (%fftw_plan_dft_r2c  rank
+					   (sb-sys:vector-sap dims-in)
+					   (sb-sys:vector-sap in-d)
+					   (sb-sys:vector-sap out-d)
+					   flag)))
+		(when (cffi:null-pointer-p r)
+		  (error "plan_dft_r2c didn't succeed."))
+		r)))))))
+
+(defun rplanf (in &key out w h (flag +estimate+))
+  "Plan a Fast fourier transform with real input of single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
+  ;(declare (type (array single-float *) in))
+  (unless out
+    (error "in-place transform not supported."))
+  (let* ((in-d (or (array-displacement in) in))
+	 (out-d (or (array-displacement out) out)))
+    (if (not (and in-d out-d))
+	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
+	(let* ((dims (array-dimensions in))
+	       (rank (array-rank in)))
+	  (let* ((dims-l (or (and (and w h) (list h w))
+			    dims))
+		 (dims-in (make-array rank :element-type '(signed-byte 32)
+				      :initial-contents dims-l)))
+	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+			   (+ 1 (floor (first (last dims-l)) 2)))
+			(array-total-size out-d)))
+	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
+	      (let ((r (%fftwf_plan_dft_r2c rank
+					    (sb-sys:vector-sap dims-in)
+					    (sb-sys:vector-sap (sb-ext:array-storage-vector in-d))
+					    (sb-sys:vector-sap (sb-ext:array-storage-vector out-d))
+					    flag)))
+		(when (cffi:null-pointer-p r)
+		  (error "plan_dft_r2c didn't succeed."))
+		r)))))))
+
+(defun rplanf2 (in &key out w h (flag +estimate+))
+  "Plan a Fast fourier transform with 2d real input of single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
+  (declare (type (array single-float 2) in))
+  (unless out
+    (error "in-place transform not supported."))
+  (let* ((in-d (or (array-displacement in) in))
+	 (out-d (or (array-displacement out) out)))
+    (if (not (and in-d out-d))
+	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
+	(let* ((dims (array-dimensions in)))
+	  (let* ((dims-l (or (and (and w h) (list h w))
+			    dims)))
+	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+			   (+ 1 (floor (first (last dims-l)) 2)))
+			(array-total-size out-d)))
+	    (sb-sys:with-pinned-objects (in-d out-d)
+	      (let ((r (%fftwf_plan_dft_r2c_2d (first dims-l)
+					       (second dims-l)
+					       (sb-sys:vector-sap in-d)
+					       (sb-sys:vector-sap out-d)
+					       flag)))
+		(when (cffi:null-pointer-p r)
+		  (error "plan_dft_r2c_2d didn't succeed."))
+		r)))))))
+
+(defun planf (in &key out w h (flag +estimate+) (sign +forward+))
+  "Plan a Fast fourier transform with real input of complex single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
+  (declare (type (array (complex single-float) *) in))
+  (unless out
+    (error "in-place transform not supported."))
+  (let* ((in-d (or (array-displacement in) in))
+	 (out-d (or (array-displacement out) out)))
+    (let* ((dims (array-dimensions in))
+	   (rank (array-rank in)))
+      (let* ((dims-l (or (and (and w h) (list h w))
+			 dims))
+	     (dims-in (make-array rank :element-type '(signed-byte 32)
+				  :initial-contents dims-l)))
+	(assert (<= (* (reduce #'* (butlast dims-l)) 
+		       (+ 1 (floor (first (last dims-l)) 2)))
+		    (array-total-size out-d)))
+	(sb-sys:with-pinned-objects (in-d out-d dims-in)
+	  (let ((r (%fftwf_plan_dft  rank
+				     (sb-sys:vector-sap dims-in)
+				     (sb-sys:vector-sap in-d)
+				     (sb-sys:vector-sap out-d)
+				     sign flag)))
+	    (when (cffi:null-pointer-p r)
+	      (error "plan_dft didn't succeed."))
+	    r))))))
 
 
 (defun make-foreign-complex-array-as-double (dims)
@@ -95,7 +209,7 @@ out-of-place transform. If only one is given, in-place transform."
 ;; threads. http://www.fftw.org/doc/Thread-safety.html#Thread-safety
 
 (declaim (optimize (debug 3)))
-(defun ft (in &key out-arg w h (flag +estimate+))
+(defun ft (in &key out-arg w h (flag +estimate+) (sign +forward+))
   "Plan and execute an out-of-place Fourier transform of the array
 'in'. SBCL allows to call the foreign function without copying the
 data but the input array 'in' must be a displaced one-dimensional
@@ -140,7 +254,7 @@ allocate the arrays, the input and output data must be copied."
 		   (declare (ignore in-sap)) ;; i just do this in order to pin the array
 		   (with-pointer-to-vector-data (out-sap out1)
 		     (declare (ignore out-sap))
-		     (let ((plan (plan in :out out :w w :h h :flag flag)))
+		     (let ((plan (plan in :out out :w w :h h :flag flag :sign sign)))
 		       (%fftw_execute plan))))
 		 out)
 	       (error "input array is not complex double-float. I can't work with this.")
@@ -157,4 +271,33 @@ allocate the arrays, the input and output data must be copied."
 		 out)))
 	(error "input array is not displaced to 1d array. I can't work with this."))
     ))
+
+(defun rftf (in &key out-arg w h (flag +estimate+))
+  "Plan and execute an out-of-place Fourier transform of the real
+single-float array 'in'."
+  (declare (type (array single-float *) in))
+  (let* ((dims-l (or (and (and w h) (list h w))
+		    (array-dimensions in)))
+	(odims-l (append (butlast dims-l)
+			 (+ 1 (floor (first (last dims-l)) 2)))))
+    (let* ((out1 (or (and out-arg (array-displacement out-arg))
+		     (make-array (reduce #'* odims-l)
+				 :element-type '(complex single-float))))
+	   (out  (make-array odims-l :element-type '(complex double-float)
+			     :displaced-to out1)))
+      (sb-sys:with-pinned-objects (out1 in)
+	(let (#+nil (in1 (cond
+		     ((and (sb-impl::array-header-p in)
+			   (sb-impl::%array-displaced-p in))
+		      (if (equal 'single-float (array-element-type in))
+			  (array-displacement in)
+			  (error "input array is not single-float. I can't work with this.")))
+		     ((and (sb-impl::array-header-p in)
+			   (sb-ext:array-storage-vector in))
+		      (sb-ext:array-storage-vector in))
+		     (t (error "input array is neither displaced to 1d array nor simple-array. I can't work with this.")))))
+	  (let ((plan (rplanf in :out out :w w :h h
+			      :flag flag)))
+	    (%fftwf_execute plan))
+	  out)))))
 
