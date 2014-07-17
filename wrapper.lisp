@@ -68,12 +68,15 @@ out-of-place transform. If only one is given, in-place transform."
 				     :initial-contents (or (and (and w h) (list h w))
 							   dims))))
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
-	     (%fftw_plan_dft rank (sb-sys:vector-sap dims-in) (sb-sys:vector-sap in-d)
-			     (sb-sys:vector-sap out-d)
-			     sign flag)))))))
+	      (let ((r (%fftw_plan_dft rank (sb-sys:vector-sap dims-in) (sb-sys:vector-sap in-d)
+				       (sb-sys:vector-sap out-d)
+				       sign flag)))
+		(when (cffi:null-pointer-p r)
+		  (error "plan_dft didn't succeed."))
+		r)))))))
 
 
-(defun srplan (in &key out w h (flag +estimate+) (sign +forward+))
+(defun rplanf (in &key out w h (flag +estimate+) (sign +forward+))
   "Plan a Fast fourier transform with real input of single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
   (declare (type (array single-float *) in))
   (unless out
@@ -191,7 +194,7 @@ allocate the arrays, the input and output data must be copied."
 	(error "input array is not displaced to 1d array. I can't work with this."))
     ))
 
-(defun srft (in &key out-arg w h (flag +estimate+) (sign +forward+))
+(defun rftf (in &key out-arg w h (flag +estimate+) (sign +forward+))
   "Plan and execute an out-of-place Fourier transform of the real
 single-float array 'in'."
   (declare (type (array single-float *) in))
@@ -215,7 +218,7 @@ single-float array 'in'."
 			   (sb-ext:array-storage-vector in))
 		      (sb-ext:array-storage-vector in))
 		     (t (error "input array is neither displaced to 1d array nor simple-array. I can't work with this.")))))
-	  (let ((plan (srplan in :out out :w w :h h
+	  (let ((plan (rplanf in :out out :w w :h h
 			      :flag flag :sign sign)))
 	    (%fftwf_execute plan))
 	  out)))))

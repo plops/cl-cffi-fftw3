@@ -22,15 +22,12 @@
     #-linux #p"d:/martin/cl-cffi-fftw3/"))
 #+nil
 (asdf:load-system "fftw")
-
+#+nil
 (fftw:prepare-threads 2)
 #+nli
 (fftw::%fftw_plan_with_nthreads 2)
 #+nil
 (fftw::%sfftw_plan_with_nthreads 2)
-
-#+nil
-(sb-alien::dlsym sb-alien::*runtime-dlhandle* "fftw_plan_with_nthreads")
 
 (defparameter *bla* nil)
 (sb-ext:gc :full t)
@@ -67,6 +64,7 @@
        (time (dotimes (i 100) (fftw::%fftw_execute plan)))))
    nil))
 ;; 0.349s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz
+;; 0.429s on 2 threads x201 Intel(R) Core(TM) i5 CPU       M 520  @ 2.40GHz after recompiling gentoo fftw with avx
 
 (time
  (let* ((n 512)
@@ -80,7 +78,7 @@
 	(p (make-array (list a bo ) :element-type '(complex single-float)
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
-     (let ((plan (fftw::srplan q :out p :flag fftw::+patient+)))
+     (let ((plan (fftw::rplanf q :out p :flag fftw::+patient+)))
        (time (dotimes (i 100) (fftw::%fftwf_execute plan)))))
    nil))
 

@@ -64,3 +64,21 @@
   (nthreads :int))
 
 
+
+(defcfun (%fftw_export_wisdom_to_filename "fftw_export_wisdom_to_filename")
+    :int ;; non-zero on success
+  (filename :string))
+
+(defcfun (%fftw_import_wisdom_from_filename "fftw_import_wisdom_from_filename")
+    :int
+  (filename :string))
+
+
+(defcfun (%fftwf_export_wisdom_to_filename "fftwf_export_wisdom_to_filename")
+    :int ;; non-zero on success
+  (filename :string))
+
+(defcfun (%fftwf_import_wisdom_from_filename "fftwf_import_wisdom_from_filename")
+    :int
+  (filename :string))
+   
