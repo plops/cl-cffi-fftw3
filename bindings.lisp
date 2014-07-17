@@ -49,7 +49,6 @@
   (n (:pointer :int))
   (in :pointer)
   (out :pointer)
-  (sign :int)
   (flags :unsigned-int))
 
 (defcfun (%fftw_plan_dft_r2c_1d "fftw_plan_dft_1d")
@@ -66,7 +65,6 @@
   (n (:pointer :int))
   (in :pointer)
   (out :pointer)
-  (sign :int)
   (flags :unsigned-int))
 
 (defcfun (%fftwf_plan_dft_r2c_2d "fftwf_plan_dft_r2c_2d")
@@ -75,7 +73,6 @@
   (n1 :int)
   (in :pointer)
   (out :pointer)
-  (sign :int)
   (flags :unsigned-int))
 
 ;; functions in the fftw3_threads library

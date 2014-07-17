@@ -98,14 +98,14 @@ out-of-place transform. If only one is given, in-place transform."
 					   (sb-sys:vector-sap dims-in)
 					   (sb-sys:vector-sap in-d)
 					   (sb-sys:vector-sap out-d)
-					   sign flag)))
+					   flag)))
 		(when (cffi:null-pointer-p r)
 		  (error "plan_dft_r2c didn't succeed."))
 		r)))))))
 
-(defun rplanf (in &key out w h (flag +estimate+) (sign +forward+))
+(defun rplanf (in &key out w h (flag +estimate+))
   "Plan a Fast fourier transform with real input of single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
-  (declare (type (array single-float *) in))
+  ;(declare (type (array single-float *) in))
   (unless out
     (error "in-place transform not supported."))
   (let* ((in-d (or (array-displacement in) in))
@@ -122,11 +122,11 @@ out-of-place transform. If only one is given, in-place transform."
 			   (+ 1 (floor (first (last dims-l)) 2)))
 			(array-total-size out-d)))
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
-	      (let ((r (%fftwf_plan_dft_r2c  rank
-					   (sb-sys:vector-sap dims-in)
-					   (sb-sys:vector-sap in-d)
-					   (sb-sys:vector-sap out-d)
-					   sign flag)))
+	      (let ((r (%fftwf_plan_dft_r2c rank
+					    (sb-sys:vector-sap dims-in)
+					    (sb-sys:vector-sap (sb-ext:array-storage-vector in-d))
+					    (sb-sys:vector-sap (sb-ext:array-storage-vector out-d))
+					    flag)))
 		(when (cffi:null-pointer-p r)
 		  (error "plan_dft_r2c didn't succeed."))
 		r)))))))

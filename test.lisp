@@ -23,7 +23,7 @@
 #+nil
 (asdf:load-system "fftw")
 #+nil
-(fftw:prepare-threads 2)
+(fftw:prepare-threads 4)
 #+nli
 (fftw::%fftw_plan_with_nthreads 4)
 #+nil
@@ -35,6 +35,8 @@
 (fftw::%fftw_export_wisdom_to_filename "/home/martin/fftw-bluechip_4.wisdom")
 #+nil
 (fftw::%fftw_import_wisdom_from_filename "/home/martin/fftw-x201.wisdom")
+#+nil
+(fftw::%fftw_import_wisdom_from_filename "/home/martin/fftw-bluechip_4.wisdom")
 #+nil
 (fftw::%fftwf_export_wisdom_to_filename "/home/martin/fftwf-x201.wisdom")
 
@@ -124,15 +126,17 @@
 				 fftw::+forward+ fftw::+measure+
 				 )))
 
-(let* ((n 512) ;; 2d call
+(let* ((n 580) ;; 2d call
        (no (+ 1 (floor n 2)))
        (i1 (make-array (list n n) :element-type 'single-float))
        (o1 (make-array (list n no) :element-type '(complex single-float))))
   (sb-sys:with-pinned-objects (i1 o1)
-    (fftw::%fftwf_plan_dft_r2c_2d n n
-				  (sb-sys:vector-sap (sb-ext:array-storage-vector i1))
-				  (sb-sys:vector-sap (sb-ext:array-storage-vector o1))
-				  fftw::+forward+ fftw::+estimate+)))
+    (let ((plan (fftw::rplanf i1 :out o1 :flag fftw::+patient+)))
+      (time (dotimes (i 1000) (fftw::%fftw_execute plan))))))
+;; n=512
+;; 0.241s 4 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total .92s)
+;; n=580
+;; 1.49s 4 threads bluechip Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (total 5.832s)
 
 (sb-sys:with-pinned-objects (in-d out-d dims-in)
   (let ((r ))
