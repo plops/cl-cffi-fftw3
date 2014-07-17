@@ -131,6 +131,31 @@ out-of-place transform. If only one is given, in-place transform."
 		  (error "plan_dft_r2c didn't succeed."))
 		r)))))))
 
+(defun rplanf2 (in &key out w h (flag +estimate+) (sign +forward+))
+  "Plan a Fast fourier transform with 2d real input of single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
+  (declare (type (array single-float 2) in))
+  (unless out
+    (error "in-place transform not supported."))
+  (let* ((in-d (or (array-displacement in) in))
+	 (out-d (or (array-displacement out) out)))
+    (if (not (and in-d out-d))
+	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
+	(let* ((dims (array-dimensions in)))
+	  (let* ((dims-l (or (and (and w h) (list h w))
+			    dims)))
+	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+			   (+ 1 (floor (first (last dims-l)) 2)))
+			(array-total-size out-d)))
+	    (sb-sys:with-pinned-objects (in-d out-d)
+	      (let ((r (%fftwf_plan_dft_r2c_2d (first dims-l)
+					       (second dims-l)
+					       (sb-sys:vector-sap in-d)
+					       (sb-sys:vector-sap out-d)
+					       sign flag)))
+		(when (cffi:null-pointer-p r)
+		  (error "plan_dft_r2c_2d didn't succeed."))
+		r)))))))
+
 (defun planf (in &key out w h (flag +estimate+) (sign +forward+))
   "Plan a Fast fourier transform with real input of complex single float. If in and out are given, out-of-place transform. In-place transform is not supported (because it would need padding)."
   (declare (type (array (complex single-float) *) in))

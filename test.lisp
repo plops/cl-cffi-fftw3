@@ -90,7 +90,7 @@
 	(p (make-array (list a bo ) :element-type '(complex single-float)
 		       :displaced-to p1)))
    (sb-sys:with-pinned-objects (p q p1 q1)
-     (let ((plan (fftw::rplanf q :out p :flag fftw::+patient+)))
+     (let ((plan (fftw::rplanf2 q :out p :flag fftw::+patient+)))
        (time (dotimes (i 100) (fftw::%fftwf_execute plan)))))
    nil))
 
@@ -103,18 +103,26 @@
        (time (dotimes (i 1000) (fftw::%fftw_execute plan)))))
    nil)
 
-(let* ((n 512)
-	(no (+ 1 (floor n 2)))
-	(i1 (make-array n :element-type 'double-float))
-       (o1 (make-array no :element-type '(complex double-float)))
-       (dims-in (make-array 1 :element-type '(signed-byte 32)
-			    :initial-contents (list 512))))
-   (sb-sys:with-pinned-objects (i1 o1)
-     (fftw::%fftw_plan_dft_r2c_1d 512
-			  (sb-sys:vector-sap i1)
-			  (sb-sys:vector-sap o1)
-			  fftw::+forward+ fftw::+measure+
-			  )))
+(let* ((n 512) ;; 1d call
+       (no (+ 1 (floor n 2)))
+       (i1 (make-array n :element-type 'double-float))
+       (o1 (make-array no :element-type '(complex double-float))))
+  (sb-sys:with-pinned-objects (i1 o1)
+    (fftw::%fftw_plan_dft_r2c_1d 512
+				 (sb-sys:vector-sap i1)
+				 (sb-sys:vector-sap o1)
+				 fftw::+forward+ fftw::+measure+
+				 )))
+
+(let* ((n 512) ;; 2d call
+       (no (+ 1 (floor n 2)))
+       (i1 (make-array (list n n) :element-type 'single-float))
+       (o1 (make-array (list n no) :element-type '(complex single-float))))
+  (sb-sys:with-pinned-objects (i1 o1)
+    (fftw::%fftwf_plan_dft_r2c_2d n n
+				  (sb-sys:vector-sap (sb-ext:array-storage-vector i1))
+				  (sb-sys:vector-sap (sb-ext:array-storage-vector o1))
+				  fftw::+forward+ fftw::+estimate+)))
 
 (sb-sys:with-pinned-objects (in-d out-d dims-in)
   (let ((r ))

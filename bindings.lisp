@@ -69,6 +69,15 @@
   (sign :int)
   (flags :unsigned-int))
 
+(defcfun (%fftwf_plan_dft_r2c_2d "fftwf_plan_dft_r2c_2d")
+    plan-pointer
+  (n0 :int)
+  (n1 :int)
+  (in :pointer)
+  (out :pointer)
+  (sign :int)
+  (flags :unsigned-int))
+
 ;; functions in the fftw3_threads library
 
 (defcfun (%fftw_init_threads "fftw_init_threads") :int)
