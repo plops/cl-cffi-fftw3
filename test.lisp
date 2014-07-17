@@ -103,6 +103,14 @@
        (time (dotimes (i 1000) (fftw::%fftwf_execute plan)))))
    nil)
 
+(let* ((n 512)
+       (i1 (make-array n :element-type '(complex single-float)))
+       (o1 (make-array n :element-type '(complex single-float))))
+   (sb-sys:with-pinned-objects (i1 o1)
+     (let ((plan (fftw::planf i1 :out o1 :flag fftw::+patient+)))
+       (time (dotimes (i 100000) (fftw::%fftwf_execute plan)))))
+   nil)
+
 
 (let* ((w 15)
        (h 14)
