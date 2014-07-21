@@ -279,11 +279,11 @@ single-float array 'in'."
   (let* ((dims-l (or (and (and w h) (list h w))
 		    (array-dimensions in)))
 	(odims-l (append (butlast dims-l)
-			 (+ 1 (floor (first (last dims-l)) 2)))))
+			 (list (+ 1 (floor (first (last dims-l)) 2))))))
     (let* ((out1 (or (and out-arg (array-displacement out-arg))
 		     (make-array (reduce #'* odims-l)
 				 :element-type '(complex single-float))))
-	   (out  (make-array odims-l :element-type '(complex double-float)
+	   (out  (make-array odims-l :element-type '(complex single-float)
 			     :displaced-to out1)))
       (sb-sys:with-pinned-objects (out1 in)
 	(let (#+nil (in1 (cond
@@ -298,6 +298,7 @@ single-float array 'in'."
 		     (t (error "input array is neither displaced to 1d array nor simple-array. I can't work with this.")))))
 	  (let ((plan (rplanf in :out out :w w :h h
 			      :flag flag)))
-	    (%fftwf_execute plan))
+	    (%fftwf_execute plan)
+	    (%fftwf_destroy_plan plan))
 	  out)))))
 

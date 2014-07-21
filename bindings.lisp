@@ -67,6 +67,10 @@
   (out :pointer)
   (flags :unsigned-int))
 
+(defcfun (%fftwf_destroy_plan "fftwf_destroy_plan")
+    :void
+  (plan plan-pointer))
+
 (defcfun (%fftwf_plan_dft_r2c_2d "fftwf_plan_dft_r2c_2d")
     plan-pointer
   (n0 :int)
