@@ -274,7 +274,7 @@ allocate the arrays, the input and output data must be copied."
 
 
 (defun ftf (in &key out w h (flag +estimate+) (sign +forward+))
-  (declare (type (array single-float) in))
+  ;(declare (type (array single-float) in))
   (let* ((dims-l (or (and (and w h) (list h w))
 		     (array-dimensions in)))
 	 (out1 (or out
