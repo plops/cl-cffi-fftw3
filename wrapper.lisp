@@ -272,6 +272,26 @@ allocate the arrays, the input and output data must be copied."
 	(error "input array is not displaced to 1d array. I can't work with this."))
     ))
 
+
+(defun ftf (in &key out w h (flag +estimate+) (sign +forward+))
+  (declare (type (array single-float) in))
+  (let* ((dims-l (or (and (and w h) (list h w))
+		     (array-dimensions in)))
+	 (out1 (or out
+		   (make-array dims-l
+			       :element-type '(complex single-float))))
+	 (dims (make-array (length dims-l) :element-type '(signed-byte 32)
+			   :initial-contents dims-l)))
+    (sb-sys:with-pinned-objects (out1 in dims)
+      (let ((plan (%fftwf_plan_dft (array-rank in)
+				   (sb-sys:vector-sap dims)
+				   (sb-sys:vector-sap (sb-ext:array-storage-vector in))
+				   (sb-sys:vector-sap (sb-ext:array-storage-vector out1))
+				   sign flag)))
+	(%fftwf_execute plan)
+	(%fftwf_destroy_plan plan))
+      out)))
+
 (defun rftf (in &key out-arg w h (flag +estimate+))
   "Plan and execute an out-of-place Fourier transform of the real
 single-float array 'in'."
