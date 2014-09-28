@@ -24,12 +24,19 @@
   (%fftw_plan_with_nthreads n)
   (%fftwf_plan_with_nthreads n))
 
+(defun get-1d-array (a)
+  (if (sb-impl::array-header-p in)
+      (if (sb-impl::%array-displaced-p in)
+	  (array-displacement in)
+	  (sb-ext:array-storage-vector in))
+	(error "input array is not displaced to 1d array. I can't work with this.")))
+
 (defun plan (in &key out w h (flag +estimate+) (sign +forward+))
   "Plan a Fast fourier transform. If in and out are given,
 out-of-place transform. If only one is given, in-place transform."
   #+sbcl (declare (type (array (complex double-float) *) in))
-  (let* ((in-d (array-displacement in))
-	 (out-d (array-displacement (if out out in))))
+  (let* ((in-d (get-1d-array in))
+	 (out-d (get-1d-array (if out out in))))
    (if (not (and in-d out-d))
 	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
 	(let* ((dims #+sbcl (array-dimensions in)
