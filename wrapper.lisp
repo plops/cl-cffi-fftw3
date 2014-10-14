@@ -24,7 +24,7 @@
   (%fftw_plan_with_nthreads n)
   (%fftwf_plan_with_nthreads n))
 
-(defun get-1d-array (a)
+(defun get-1d-array (in)
   (if (sb-impl::array-header-p in)
       (if (sb-impl::%array-displaced-p in)
 	  (array-displacement in)
@@ -225,8 +225,9 @@ the foreign heap, i.e. if you don't use ccl:make-heap-ivector to
 allocate the arrays, the input and output data must be copied."
   #+sbcl (declare (type (array (complex double-float) *) in))
   (let* ((out1 (or (and out-arg (array-displacement out-arg)) (make-array (array-total-size in) :element-type '(complex double-float))))
-	 (out  (make-array (array-dimensions in) :element-type '(complex double-float)
-			   :displaced-to out1)))
+	 (out  #-sbcl (make-array (array-dimensions in) :element-type '(complex double-float)
+			   :displaced-to out1)
+	       #+sbcl (make-array (array-dimensions in) :element-type '(complex double-float))))
     #+ccl
     (let* ((in-foreign (if (foreign-complex-array-as-double-p in)
 			   in
@@ -273,7 +274,7 @@ allocate the arrays, the input and output data must be copied."
 ;; the array must be pinned from plan creation to execution
 		   (with-pointer-to-vector-data (out-sap out1)
 		     (declare (ignore out-sap))
-		     (let ((plan (plan in :out out :w w :h h)))
+		     (let ((plan (plan in :out out :w w :h h :sign sign)))
 		       (%fftw_execute plan))))
 		 out)))
 	(error "input array is not displaced to 1d array. I can't work with this."))
