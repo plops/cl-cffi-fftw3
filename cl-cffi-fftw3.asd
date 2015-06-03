@@ -1,6 +1,6 @@
 ;; i copied the general layout from cffi-redland
 
-(asdf:defsystem fftw
+(asdf:defsystem #:cl-cffi-fftw3
   :version "0"
   :description "CFFI bindings for fftw3 \"Fastest Fourier Transform in the West\"."
   :maintainer "Martin Kielhorn <kielhorn.martin@gmail.com>"

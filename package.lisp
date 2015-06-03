@@ -1,4 +1,4 @@
-(defpackage #:fftw
+(defpackage #:cl-cffi-fftw3
     (:use #:cl #:cffi)
     (:export
      #:make-foreign-complex-array-as-double

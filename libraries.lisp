@@ -1,4 +1,4 @@
-(in-package :fftw)
+(in-package #:cl-cffi-fftw3)
 
 ;; wget ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4-dll32.zip
 

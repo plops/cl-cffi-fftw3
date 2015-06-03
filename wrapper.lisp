@@ -1,4 +1,4 @@
-(in-package :fftw)
+(in-package #:cl-cffi-fftw3)
 
 
 #+linux
@@ -41,7 +41,7 @@ out-of-place transform. If only one is given, in-place transform."
 	(error "initially you should allocate data as a 1d array in lisp and then use displacement.")
 	(let* ((dims #+sbcl (array-dimensions in)
 		     #+ccl (butlast (array-dimensions in)))
-	       (rank #+sbcl (array-rank in) 
+	       (rank #+sbcl (array-rank in)
 		     #+ccl (if (foreign-complex-array-as-double-p in)
 			       (1- (array-rank in))
 			       (error "please give plan an array that has been allocated on the foreign heap."))))
@@ -55,7 +55,7 @@ out-of-place transform. If only one is given, in-place transform."
 	  ;; free it. however, as i understand, the semantics of cffi
 	  ;; do not cover this (note: i now think one could implement
 	  ;; this using ccl:terminate-when-unreachable).
-	  
+
 	  #+ccl
 	  (progn
 	    (when (and out (not (foreign-complex-array-as-double-p out)))
@@ -67,7 +67,7 @@ out-of-place transform. If only one is given, in-place transform."
 		    (out-p (ccl:%null-ptr)))
 		(ccl::%vect-data-to-macptr in-d in-p)
 		(ccl::%vect-data-to-macptr out-d out-p)
-		(prog1 
+		(prog1
 		    (%fftw_plan_dft rank dims-p in-p out-p +forward+ +estimate+)
 		  (ccl:dispose-heap-ivector dims-in-foreign)))))
 	  #+sbcl
@@ -97,7 +97,7 @@ out-of-place transform. If only one is given, in-place transform."
 			    dims))
 		 (dims-in (make-array rank :element-type '(signed-byte 32)
 				      :initial-contents dims-l)))
-	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+	    (assert (<= (* (reduce #'* (butlast dims-l))
 			   (+ 1 (floor (first (last dims-l)) 2)))
 			(array-total-size out-d)))
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
@@ -125,7 +125,7 @@ out-of-place transform. If only one is given, in-place transform."
 			    dims))
 		 (dims-in (make-array rank :element-type '(signed-byte 32)
 				      :initial-contents dims-l)))
-	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+	    (assert (<= (* (reduce #'* (butlast dims-l))
 			   (+ 1 (floor (first (last dims-l)) 2)))
 			(array-total-size out-d)))
 	    (sb-sys:with-pinned-objects (in-d out-d dims-in)
@@ -150,7 +150,7 @@ out-of-place transform. If only one is given, in-place transform."
 	(let* ((dims (array-dimensions in)))
 	  (let* ((dims-l (or (and (and w h) (list h w))
 			    dims)))
-	    (assert (<= (* (reduce #'* (butlast dims-l)) 
+	    (assert (<= (* (reduce #'* (butlast dims-l))
 			   (+ 1 (floor (first (last dims-l)) 2)))
 			(array-total-size out-d)))
 	    (sb-sys:with-pinned-objects (in-d out-d)
@@ -176,7 +176,7 @@ out-of-place transform. If only one is given, in-place transform."
 			 dims))
 	     (dims-in (make-array rank :element-type '(signed-byte 32)
 				  :initial-contents dims-l)))
-	(assert (<= (* (reduce #'* (butlast dims-l)) 
+	(assert (<= (* (reduce #'* (butlast dims-l))
 		       (+ 1 (floor (first (last dims-l)) 2)))
 		    (array-total-size out-d)))
 	(sb-sys:with-pinned-objects (in-d out-d dims-in)
@@ -200,7 +200,7 @@ out-of-place transform. If only one is given, in-place transform."
 						  :displaced-to ivector)))
 			 ;; the following uses ccl:terminate-when-unreachable. it should be
 			 ;; possible to use this in cffi
-			 (trivial-garbage:finalize darray (lambda () 
+			 (trivial-garbage:finalize darray (lambda ()
 							    (format t "getting rid of object with size ~a~%" (length ivector))
 							    #+ccl (ccl:dispose-heap-ivector ivector)))
 			 (values darray iptr))))
@@ -245,7 +245,7 @@ allocate the arrays, the input and output data must be copied."
 		  (aref in-foreign1 (+ 1 (* 2 i))) (imagpart (aref in1 i))))))
       (let ((plan (plan in-foreign out-foreign)))
 	(%fftw_execute plan)
-	(if out-arg 
+	(if out-arg
 	    out-arg
 	    (progn
 	      (dotimes (i (length out1))
@@ -329,4 +329,3 @@ single-float array 'in'."
 	    (%fftwf_execute plan)
 	    (%fftwf_destroy_plan plan))
 	  out)))))
-

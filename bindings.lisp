@@ -1,4 +1,4 @@
-(in-package :fftw)
+(in-package #:cl-cffi-fftw3)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (load-fftw-libraries))
@@ -9,7 +9,7 @@
 (defconstant +backward+ 1)
 (defconstant +measure+ 0)
 (defconstant +estimate+ (ash 1 6)) ;; array isn't overwritten during planning
-(defconstant +patient+ (ash 1 5)) 
+(defconstant +patient+ (ash 1 5))
 
 ;; types
 
@@ -108,4 +108,3 @@
 (defcfun (%fftwf_import_wisdom_from_filename "fftwf_import_wisdom_from_filename")
     :int
   (filename :string))
-   
